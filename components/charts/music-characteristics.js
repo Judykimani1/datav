@@ -1,9 +1,19 @@
 "use client"
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from "recharts"
+
+import Link from 'next/link'
+import { useState, useMemo } from 'react'
+import {
+  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  ResponsiveContainer, Tooltip as RechartsTooltip, Legend,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Label
+} from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Info } from 'lucide-react'
+import { Info, Filter } from 'lucide-react'
+import { Slider } from "@/components/ui/slider"
 
 export function MusicCharacteristics({ data }) {
+  const [dataRange, setDataRange] = useState([0, data.length]);
+
   const characteristics = [
     { key: 'danceability_%', label: 'Danceability', description: 'How suitable a track is for dancing' },
     { key: 'valence_%', label: 'Valence', description: 'Musical positiveness conveyed by a track' },
@@ -14,10 +24,25 @@ export function MusicCharacteristics({ data }) {
     { key: 'speechiness_%', label: 'Speechiness', description: 'Spoken words in the track' }
   ]
 
+  const lineColors = {
+    Danceability: '#4FD1C5',    // Teal
+    Valence: '#3182CE',         // Blue
+    Energy: '#48BB78',          // Green
+    Acousticness: '#ED64A6',    // Pink
+    Instrumentalness: '#F6AD55', // Orange
+    Liveness: '#9F7AEA',        // Purple
+    Speechiness: '#F56565'      // Red
+  };
+
+  // Filter data based on range
+  const filteredData = useMemo(() => {
+    return data.slice(dataRange[0], dataRange[1]);
+  }, [data, dataRange]);
+
   // Safely calculate average characteristics
   const averageCharacteristics = characteristics.reduce((acc, char) => {
-    acc[char.label] = data && data.length > 0
-      ? data.reduce((sum, song) => sum + (parseFloat(song[char.key]) || 0), 0) / data.length
+    acc[char.label] = filteredData && filteredData.length > 0
+      ? filteredData.reduce((sum, song) => sum + (parseFloat(song[char.key]) || 0), 0) / filteredData.length
       : 0
     return acc
   }, {})
@@ -26,6 +51,15 @@ export function MusicCharacteristics({ data }) {
     characteristic: char,
     value: value
   }))
+
+  // Prepare data for parallel coordinates
+  const parallelData = filteredData.map(song => {
+    const processedSong = { name: song.name }
+    characteristics.forEach(char => {
+      processedSong[char.label] = parseFloat(song[char.key]) || 0
+    })
+    return processedSong
+  })
 
   // Calculate total characteristics score
   const totalScore = chartData.reduce((sum, item) => sum + item.value, 0)
@@ -36,17 +70,40 @@ export function MusicCharacteristics({ data }) {
       <CardHeader className="bg-gradient-to-r from-teal-100 to-teal-200 p-6">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-2xl font-bold text-gray-900">Music Characteristics</CardTitle>
+            <Link href="/radar" className="block transition-transform duration-200 hover:scale-105 active:scale-95">
+              <CardTitle className="text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors duration-200">
+                Music Characteristics
+              </CardTitle>
+            </Link>
             <CardDescription className="text-gray-600 mt-2">
               Comprehensive Analysis of Musical Features
             </CardDescription>
           </div>
           <div className="bg-teal-500 text-white px-4 py-2 rounded-full">
-            {chartData.length} Features
+            {filteredData.length} Features
           </div>
         </div>
       </CardHeader>
       <CardContent className="p-6 pt-4">
+        {/* Data Range Slider */}
+        <div className="mb-6">
+          <div className="flex items-center mb-2">
+            <Filter className="mr-2 h-5 w-5 text-teal-600" />
+            <p className="text-sm text-gray-700">Data Range Filter</p>
+          </div>
+          <Slider
+            defaultValue={[0, data.length]}
+            max={data.length}
+            step={1}
+            onValueChange={(value) => setDataRange(value)}
+            className="w-full"
+          />
+          <div className="text-xs text-gray-600 mt-2">
+            Showing {dataRange[0]} to {dataRange[1]} of {data.length} tracks
+          </div>
+        </div>
+
+        {/* Radar Chart */}
         <div className="h-[500px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart
@@ -61,19 +118,23 @@ export function MusicCharacteristics({ data }) {
                 strokeOpacity={0.5}
                 strokeDasharray="3 3"
               />
-
               <PolarAngleAxis
                 dataKey="characteristic"
                 tick={{ fontSize: 10, fill: 'rgba(0,0,0,0.7)' }}
               />
-
               <PolarRadiusAxis
                 angle={30}
                 domain={[0, 100]}
                 tickCount={5}
                 tick={{ fontSize: 10, fill: 'rgba(0,0,0,0.6)' }}
-              />
-
+              >
+                <Label
+                  value="Percentage (%)"
+                  position="outside"
+                  fill="rgba(0,0,0,0.6)"
+                  fontSize={10}
+                />
+              </PolarRadiusAxis>
               <Radar
                 name="Average Characteristics"
                 dataKey="value"
@@ -82,8 +143,7 @@ export function MusicCharacteristics({ data }) {
                 fillOpacity={0.3}
                 strokeWidth={2}
               />
-
-              <Tooltip
+              <RechartsTooltip
                 content={({ payload }) => {
                   if (payload && payload.length) {
                     const item = payload[0].payload
@@ -102,6 +162,75 @@ export function MusicCharacteristics({ data }) {
                 }}
               />
             </RadarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Parallel Coordinates Chart */}
+        <div className="mt-8 h-[400px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={parallelData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+            >
+              <CartesianGrid
+                horizontal={false}
+                stroke="rgba(79,209,197,0.2)"
+                strokeDasharray="3 3"
+              />
+              <XAxis
+                dataKey="name"
+                interval="preserveStartEnd"
+                tick={{ fontSize: 10, fill: 'rgba(0,0,0,0.7)' }}
+              >
+                <Label
+                  value="Tracks"
+                  offset={-10}
+                  position="insideBottom"
+                  fill="rgba(0,0,0,0.6)"
+                />
+              </XAxis>
+
+              {characteristics.map((char) => (
+                <Line
+                  key={char.label}
+                  type="monotone"
+                  dataKey={char.label}
+                  stroke={lineColors[char.label]}
+                  strokeWidth={2}
+                  dot={false}
+                  name={char.label}
+                />
+              ))}
+
+              <YAxis
+                domain={[0, 100]}
+                tick={{ fontSize: 10, fill: 'rgba(0,0,0,0.6)' }}
+              >
+                <Label
+                  value="Characteristic Intensity (%)"
+                  angle={-90}
+                  position="insideLeft"
+                  fill="rgba(0,0,0,0.6)"
+                  style={{ textAnchor: 'middle' }}
+                />
+              </YAxis>
+
+              <Legend
+                verticalAlign="bottom"
+                height={36}
+                wrapperStyle={{
+                  paddingTop: "20px",
+                  paddingBottom: "20px",
+                  fontSize: "12px"
+                }}
+              />
+
+              <RechartsTooltip
+                contentStyle={{ backgroundColor: 'white', border: 'none', borderRadius: '12px', padding: '10px' }}
+                itemStyle={{ color: 'gray' }}
+                labelStyle={{ fontWeight: 'bold', color: 'black' }}
+              />
+            </LineChart>
           </ResponsiveContainer>
         </div>
 

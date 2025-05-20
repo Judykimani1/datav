@@ -8,7 +8,10 @@ import { PlaylistDistribution } from './charts/playlist-distribution'
 import { BPMVsStreams } from './charts/bpm-vs-streams'
 import { MonthlyStreamingActivity } from './charts/monthly-streaming-activity'
 import { MusicCharacteristics } from './charts/music-characteristics'
+import { BPMHistogram } from './charts/bpm-distribution'
 import { useSpotifyData } from '@/hooks/use-spotify-data'
+import { MusicKeyHistogram } from './charts/songs-keys'
+import { MusicReleaseYearsChart } from './charts/music-years'
 
 export function Analytics() {
   const { data, isLoading, error } = useSpotifyData()
@@ -47,6 +50,9 @@ export function Analytics() {
         <BPMVsStreams data={filteredData} />
         <MonthlyStreamingActivity data={filteredData} />
         <MusicCharacteristics data={filteredData} />
+        <BPMHistogram data={filteredData} />
+        <MusicKeyHistogram data={filteredData} />
+        <MusicReleaseYearsChart data={filteredData} />
       </div>
     </div>
   )

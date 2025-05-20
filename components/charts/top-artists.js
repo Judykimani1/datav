@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import React, { useState } from 'react'
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Cell } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -43,7 +44,9 @@ export function TopArtists({ data }) {
       <CardHeader className="bg-gradient-to-r from-indigo-100 to-indigo-200 p-6">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-2xl font-bold text-gray-900">Top Artists</CardTitle>
+            <Link href={"/bar"} className="block transition-transform duration-200 hover:scale-105 active:scale-95">
+            <CardTitle className="text-2xl font-bold text-gray-900  hover:text-blue-600 transition-colors duration-200">Top Artists</CardTitle>
+            </Link>
             <CardDescription className="text-gray-600 mt-2">
               Top Artists by Total Stream Count
             </CardDescription>

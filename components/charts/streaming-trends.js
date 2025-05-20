@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
@@ -32,11 +33,14 @@ export function StreamingTrends({ data }) {
     .sort((a, b) => a.year - b.year)
 
   return (
+
     <Card className="w-full shadow-2xl rounded-2xl overflow-hidden border-none">
       <CardHeader className="bg-gradient-to-r from-blue-100 to-blue-200 p-6">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-2xl font-bold text-gray-900">Streaming Trends</CardTitle>
+          <Link href="/line" className="block transition-transform duration-200 hover:scale-105 active:scale-95">
+            <CardTitle className="text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors duration-200">Streaming Trends</CardTitle>
+          </Link>
             <CardDescription className="text-gray-600 mt-2">
               Total streams aggregated by release year
             </CardDescription>
